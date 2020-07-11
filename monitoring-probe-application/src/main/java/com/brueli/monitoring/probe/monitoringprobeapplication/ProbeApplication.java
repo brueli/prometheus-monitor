@@ -18,7 +18,7 @@ import io.prometheus.client.exporter.HTTPServer;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {
-	"com.brueli.monitoring.probe"
+	"com.brueli.monitoring.probe.monitoringprobesample"
 })
 public class ProbeApplication {
 
