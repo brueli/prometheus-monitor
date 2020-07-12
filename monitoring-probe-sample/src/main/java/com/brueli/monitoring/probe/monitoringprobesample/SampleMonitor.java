@@ -10,12 +10,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
-import org.springframework.core.annotation.Order;
 
 import io.prometheus.client.Gauge;
 
 @Service
-@Order(0)
 @EnableConfigurationProperties(SampleMonitorConfiguration.class)
 public class SampleMonitor extends MonitorBase {
 
