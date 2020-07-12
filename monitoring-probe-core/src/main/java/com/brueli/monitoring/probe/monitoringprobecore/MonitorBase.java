@@ -40,7 +40,7 @@ public abstract class MonitorBase implements IMonitor {
     public final void stop() {
         final String monitorTypeName = this.getClass().getCanonicalName();
 
-        logger.error("stopping monitor " + monitorTypeName + "...");
+        logger.info("stopping monitor " + monitorTypeName + "...");
         try {
             final long SHUTDOWN_TIMEOUT = 20;
             boolean shutdownComplete = false;
