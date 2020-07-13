@@ -25,7 +25,9 @@ public abstract class MonitorBase implements IMonitor {
             scheduler = Executors.newScheduledThreadPool(config.getNumThreads());
         }
 
-        beforeStart();
+        if (!beforeStart()) {
+            logger.info("monitor does not want to start...");
+        }
 
         long initialDelay = convertTimespanString(config.getInitialDelay(), "initialDelay");
         long delay = convertTimespanString(config.getDelay(), "delay");
@@ -111,7 +113,7 @@ public abstract class MonitorBase implements IMonitor {
     protected void onUnregister() {}
 
     protected long convertTimespanString(String timespanString, String hint) throws RuntimeException {
-        Pattern pattern = Pattern.compile("^(\\d+)(h|m|s|ms)?$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("^(\\d+)(d|h|m|s|ms)?$", Pattern.CASE_INSENSITIVE);
         Matcher match = pattern.matcher(timespanString);
         if (!match.matches()) {
             throw new RuntimeException("invalid " + hint);
@@ -119,7 +121,9 @@ public abstract class MonitorBase implements IMonitor {
         double multiplier = 1;
         if (match.groupCount() == 2 && match.group(2) != null) {
             String multiplierName = match.group(2);
-            if (multiplierName.equalsIgnoreCase("h")) {
+            if (multiplierName.equalsIgnoreCase("d")) {
+                multiplier = 24 * 60 * 60 * 1000;
+            } else if (multiplierName.equalsIgnoreCase("h")) {
                 multiplier = 60 * 60 * 1000;
             } else if (multiplierName.equalsIgnoreCase("m")) {
                 multiplier = 60 * 1000;

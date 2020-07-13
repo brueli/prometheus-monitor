@@ -1,8 +1,11 @@
 package com.brueli.monitoring.probe.monitoringprobeapplication;
 
+import java.util.Arrays;
+
 import javax.annotation.PreDestroy;
 
 import com.brueli.monitoring.probe.monitoringprobecore.IMonitor;
+import com.brueli.monitoring.probe.monitoringprobesample.SampleMonitorConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.annotation.Order;
@@ -34,6 +38,38 @@ public class ProbeApplication {
 	 */
 	public static void main(String[] args) {
 		SpringApplication.run(ProbeApplication.class, args);
+	}
+
+	@Bean
+	@Order(2)
+	public ApplicationRunner dumpBeans(ApplicationContext ctx) {
+		return args -> {
+			System.out.println("Let's inspect the beans provided by Spring Boot:");
+			String[] beanNames = ctx.getBeanDefinitionNames();
+			Arrays.sort(beanNames);
+			for (String beanName : beanNames) {
+				System.out.println("- " + beanName);
+			}
+		};
+	}
+
+	@Bean
+	@Order(3)
+	public ApplicationRunner dumpConfig(SampleMonitorConfiguration config) {
+		return args -> {
+			System.out.println("configuration properties from application.properties");
+			if (config == null) {
+				System.out.println("config is null");
+				return;
+			}
+
+			System.out.println("name=" + config.getName());
+			System.out.println("help=" + config.getHelp());
+			System.out.println("numThreads=" + config.getNumThreads());
+			System.out.println("delay=" + config.getDelay());
+			System.out.println("initialDelay=" + config.getInitialDelay());
+			System.out.println("dontInterruptIfRunning=" + config.getDontInterruptIfRunning());
+		};
 	}
 
 	/**

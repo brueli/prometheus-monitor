@@ -12,6 +12,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>demo</name>
   <description>Demo project for Spring Boot</description>
+  <packaging>jar</packaging>
   <properties>
     <java.version>14</java.version>
   </properties>
@@ -57,6 +58,17 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>${start.class}</mainClass>
+          <layout>JAR</layout>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+			  </executions>
       </plugin>
     </plugins>
   </build>
