@@ -26,7 +26,11 @@ public class SampleMonitor extends MonitorBase {
 
 	@Override 
 	protected void onRegister() {
-		queueLength = Gauge.build().name(config.getName()).help(config.getHelp()).register();
+		Gauge.Builder builder = Gauge.build(config.getName(), config.getHelp());
+		if (config.getSubsystem() != null) {
+			builder = builder.subsystem(config.getSubsystem());
+		}
+		queueLength = builder.register();
 	}
 	
 	protected Runnable getMeasureTask() {
