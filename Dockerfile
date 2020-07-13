@@ -33,5 +33,5 @@ COPY --from=build /app/monitoring-probe-application/target/*.jar ./
 
 COPY bin/ ./bin/
 
-ENTRYPOINT ["/bin/sh"]
-#ENTRYPOINT ["/bin/sh", "-c", "./bin/entrypoint.sh"]
+#ENTRYPOINT ["/bin/sh"]
+ENTRYPOINT ["/bin/sh", "-c", "./bin/entrypoint.sh"]
