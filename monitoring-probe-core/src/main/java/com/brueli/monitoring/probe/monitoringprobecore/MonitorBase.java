@@ -6,12 +6,12 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 public abstract class MonitorBase implements IMonitor {
 
     private final Logger logger = LoggerFactory.getLogger(MonitorBase.class);
+    
     private ScheduledExecutorService scheduler;
 
     private boolean registered;
@@ -29,8 +29,8 @@ public abstract class MonitorBase implements IMonitor {
             logger.info("monitor does not want to start...");
         }
 
-        long initialDelay = convertTimespanString(config.getInitialDelay(), "initialDelay");
-        long delay = convertTimespanString(config.getDelay(), "delay");
+        long initialDelay = getConverter().convertTimespanString(config.getInitialDelay(), "initialDelay");
+        long delay = getConverter().convertTimespanString(config.getDelay(), "delay");
 
         Runnable measureTask = getMeasureTask();
         scheduler.scheduleWithFixedDelay(measureTask, initialDelay, delay, TimeUnit.MILLISECONDS);
@@ -98,6 +98,10 @@ public abstract class MonitorBase implements IMonitor {
     @Override
     public abstract MonitorConfiguration getConfig();
 
+    protected PropertyConverter getConverter() {
+        return new PropertyConverter();
+    }
+
     public final boolean isRegistered() { return registered; }
     public final boolean isEnabled() { return enabled; }
 
@@ -111,33 +115,5 @@ public abstract class MonitorBase implements IMonitor {
 
     protected void onRegister() {}
     protected void onUnregister() {}
-
-    protected long convertTimespanString(String timespanString, String hint) throws RuntimeException {
-        Pattern pattern = Pattern.compile("^(\\d+)(d|h|m|s|ms)?$", Pattern.CASE_INSENSITIVE);
-        Matcher match = pattern.matcher(timespanString);
-        if (!match.matches()) {
-            throw new RuntimeException("invalid " + hint);
-        }
-        double multiplier = 1;
-        if (match.groupCount() == 2 && match.group(2) != null) {
-            String multiplierName = match.group(2);
-            if (multiplierName.equalsIgnoreCase("d")) {
-                multiplier = 24 * 60 * 60 * 1000;
-            } else if (multiplierName.equalsIgnoreCase("h")) {
-                multiplier = 60 * 60 * 1000;
-            } else if (multiplierName.equalsIgnoreCase("m")) {
-                multiplier = 60 * 1000;
-            } else if (multiplierName.equalsIgnoreCase("s")) {
-                multiplier = 1000;
-            } else if (multiplierName.equalsIgnoreCase("ms")) {
-                multiplier = 1;
-            } else {
-                multiplier = 1;
-            }
-        }
-        Double timespanNumber = Double.parseDouble(match.group(1));
-        Double timespanValue = timespanNumber * multiplier;
-        return (long)Math.round(timespanValue);
-    }
 
 }
