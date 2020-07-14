@@ -62,7 +62,7 @@ public class ProbeApplication {
 				System.out.println("config is null");
 				return;
 			}
-
+			System.out.println("subsystem=" + config.getSubsystem());
 			System.out.println("name=" + config.getName());
 			System.out.println("help=" + config.getHelp());
 			System.out.println("numThreads=" + config.getNumThreads());
@@ -79,10 +79,16 @@ public class ProbeApplication {
 	 */
 	@Bean
 	@Order(0) 
-	public ApplicationRunner runHttpServer() {
+	public ApplicationRunner runHttpServer(ServerConfiguration config) {
 		return args -> {
 			logger.info("Starting prometheus exporter HTTPServer");
-			server = new HTTPServer(9100);
+			Integer port = config.getPort();
+			String hostname = config.getHostname();
+			if (hostname != null) {
+				server = new HTTPServer(hostname, port, true);
+			} else {
+				server = new HTTPServer(port, true);
+			}
 		};
 	}
 
