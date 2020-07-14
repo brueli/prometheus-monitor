@@ -1,10 +1,14 @@
 package com.brueli.monitoring.probe.monitoringprobecore;
 
 public class MonitorConfiguration {
-    private int numThreads;
-    private String initialDelay;
-    private String delay;
-    private String dontInterruptIfRunning;
+    private boolean enabled = true;
+    private int numThreads = 1;
+    private String initialDelay = "0";
+    private String delay = "1s";
+    private boolean dontInterruptIfRunning = true;
+
+    public Boolean getEnabled() { return enabled; }
+    public void setEnabled(boolean value) { enabled = value; }
 
     public Integer getNumThreads() { return numThreads; }
     public void setNumThreads(Integer value) { numThreads = value; }
@@ -15,6 +19,6 @@ public class MonitorConfiguration {
     public String getDelay() { return delay; }
     public void setDelay(String value) { delay = value; }
 
-    public String getDontInterruptIfRunning() { return dontInterruptIfRunning; }
-    public void setDontInterruptIfRunning(String value) { dontInterruptIfRunning = value; }
+    public Boolean getDontInterruptIfRunning() { return dontInterruptIfRunning; }
+    public void setDontInterruptIfRunning(boolean value) { dontInterruptIfRunning = value; }
 }

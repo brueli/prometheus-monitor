@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
@@ -15,83 +16,111 @@ public abstract class MonitorBase implements IMonitor {
     private ScheduledExecutorService scheduler;
 
     private boolean registered;
-    private boolean enabled;
+    private boolean started;
+    private ScheduledFuture<?> scheduledTask;
 
     @Override
     public final void start() {
         MonitorConfiguration config = this.getConfig();
+        final String monitorType = this.getMonitorTypeName();
+
+        if (!isEnabled()) {
+            logger.info("monitor is disabled: " + monitorType);
+            return;
+        }
+
+        if (started) {
+            logger.info("monitor has already started: " + monitorType);
+            return;
+        }
+
+        logger.info("starting monitor: " + monitorType);
 
         if (scheduler == null) {
             scheduler = Executors.newScheduledThreadPool(config.getNumThreads());
         }
 
         if (!beforeStart()) {
-            logger.info("monitor does not want to start...");
+            logger.info("monitor rejected to start: " + monitorType);
         }
 
         long initialDelay = getConverter().convertTimespanString(config.getInitialDelay(), "initialDelay");
         long delay = getConverter().convertTimespanString(config.getDelay(), "delay");
 
         Runnable measureTask = getMeasureTask();
-        scheduler.scheduleWithFixedDelay(measureTask, initialDelay, delay, TimeUnit.MILLISECONDS);
+        scheduledTask = scheduler.scheduleWithFixedDelay(measureTask, initialDelay, delay, TimeUnit.MILLISECONDS);
+
+        started = true;
 
         afterStart();
+
+        logger.info("monitor started: " + monitorType);
     }
 
     @Override
     public final void stop() {
-        final String monitorTypeName = this.getClass().getCanonicalName();
+        final String monitorType = this.getMonitorTypeName();
 
-        logger.info("stopping monitor " + monitorTypeName + "...");
+        if (!started) {
+            logger.info("monitor not started: " + monitorType);
+            return;
+        }
+
+        logger.info("stopping monitor: " + monitorType);
         try {
             final long SHUTDOWN_TIMEOUT = 20;
             boolean shutdownComplete = false;
 
             beforeStop();
-            logger.info("gracefully terminating scheduler...");
+
+            // cancel pending task
+            scheduledTask.cancel(!getConfig().getDontInterruptIfRunning());
+
+            logger.info("gracefully terminating scheduler: " + monitorType);
             try {
                 scheduler.shutdown();
                 scheduler.awaitTermination(SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
                 shutdownComplete = true;
-                logger.info("scheduler terminated gracefully");
+                logger.info("scheduler terminated gracefully: " + monitorType);
             }
             catch (Throwable t) {
-                logger.info("scheduler failed to terminate\ntermination exception was: " + t.toString());
+                logger.info("scheduler failed to terminate: " + monitorType + "\ntermination exception was: " + t.toString());
             }
             if (!shutdownComplete) {
-                logger.info("forcing shutdown...");
+                logger.info("forcing shutdown: " + monitorType);
                 scheduler.shutdownNow();
             }
             afterStop();
+            logger.info("monitor has stopped" + monitorType);
         }
         catch (Throwable t) {
-            logger.error("failed stop monitor " + monitorTypeName + ".\nException was: " + t.toString());
+            logger.error("failed stop monitor " + monitorType + ".\nException was: " + t.toString());
         }
     }
 
     @Override
     public final void register() {
-        final String monitorTypeName = this.getClass().getCanonicalName();
-        logger.info("registering monitor " + monitorTypeName);
+        final String monitorType = this.getMonitorTypeName();
+        logger.info("registering monitor: " + monitorType);
         try {
             onRegister();
-            logger.info("monitor " + monitorTypeName + " successfully registered");
+            logger.info("monitor successfully registered: " + monitorType);
         }
         catch (Throwable t) {
-            logger.error("failed to register monitor " + monitorTypeName + "\nexception was: " + t.toString());
+            logger.error("failed to register monitor: " + monitorType + "\nexception was: " + t.toString());
         }
     }
 
     @Override
     public final void unregister() {
-        final String monitorTypeName = this.getClass().getCanonicalName();
-        logger.info("unregistering monitor " + monitorTypeName);
+        final String monitorType = this.getMonitorTypeName();
+        logger.info("unregistering monitor: " + monitorType);
         try {
             onUnregister();
-            logger.info("monitor " + monitorTypeName + " successfully removed");
+            logger.info("monitor successfully removed: " + monitorType);
         }
         catch (Throwable t) {
-            logger.error("failed to unregister monitor " + monitorTypeName + "\nexception was: " + t.toString());
+            logger.error("failed to unregister monitor " + monitorType + "\nexception was: " + t.toString());
         }
     }
 
@@ -102,8 +131,11 @@ public abstract class MonitorBase implements IMonitor {
         return new PropertyConverter();
     }
 
-    public final boolean isRegistered() { return registered; }
-    public final boolean isEnabled() { return enabled; }
+    protected final String getMonitorTypeName() { return this.getClass().getCanonicalName(); }
+
+    public final Boolean isRegistered() { return registered; }
+    public final Boolean isEnabled() { return getConfig().getEnabled(); }
+    public final Boolean isStarted() { return started; }
 
     protected abstract Runnable getMeasureTask();
 

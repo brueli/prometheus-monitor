@@ -25,10 +25,10 @@ cd probe/monitoring-probe-application
 ### Build docker image
 ```
 cd probe/
-docker build -t monitoring-probe:test .
+docker build -t monitoring/probe:test .
 ```
 
 ### Run docker image locally
 ```
-docker run -it monitoring-probe:test
+docker run -it monitoring/probe:test
 ```
